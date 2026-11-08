@@ -106,6 +106,33 @@ class UsuarioController extends Controller {
     $this->redirect($this->volta("/usuarios/$id"));
   }
 
+  /** Cadastro manual de tag/cartão pelo modal da tela do usuário. */
+  public function criarChave(int $id): void {
+    $this->auth(); $this->csrf();
+    $u = Usuario::find($id) ?? $this->naoEncontrado();
+    $uid = strtoupper(preg_replace('/[^0-9a-fA-F]/', '', (string)($_POST['uid'] ?? '')));
+    $n = strlen($uid);
+    if ($n < 8 || $n > 20 || $n % 2) { $this->flash('UID inválido. Informe de 4 a 10 bytes em hexadecimal (ex.: A1:B2:C3:D4).', 'erro'); $this->redirect("/usuarios/$id#tags"); }
+    $uid = implode(':', str_split($uid, 2));
+    if (Chave::porUid($uid)) { $this->flash("A chave $uid já está cadastrada.", 'erro'); $this->redirect("/usuarios/$id#tags"); }
+    Chave::criarVinculada($uid, $id);
+    Auditoria::registrar('criar_chave', 'usuario', $id, ['uid' => $uid]);
+    $this->flash("Tag $uid cadastrada para {$u['nome']}.");
+    $this->redirect("/usuarios/$id#tags");
+  }
+
+  /** Bloqueia/desbloqueia a chave sem removê-la (a exclusão é outra ação). */
+  public function statusChave(int $id): void {
+    $this->auth(); $this->csrf();
+    $c = Chave::find($id);
+    if (!$c) { $this->flash('Chave não encontrada.', 'erro'); $this->redirect($this->volta('/')); }
+    $novo = (int)$c['ativo'] ? 0 : 1;
+    Chave::definirAtivo($id, $novo);
+    Auditoria::registrar($novo ? 'ativar_chave' : 'desativar_chave', 'chave', $id, ['uid' => $c['uid'], 'usuario_id' => $c['usuario_id']]);
+    $this->flash('Chave ' . $c['uid'] . ($novo ? ' ativada.' : ' desativada.'));
+    $this->redirect($this->volta('/') . '#tags');
+  }
+
   public function vincularChave(int $id): void {
     $this->auth(); $this->csrf();
     $c = Chave::find($id);
@@ -121,6 +148,6 @@ class UsuarioController extends Controller {
     $c = Chave::find($id);
     if ($c) { Chave::excluir($id); Auditoria::registrar('excluir', 'chave', $id, ['uid' => $c['uid'], 'usuario_id' => $c['usuario_id']]); }
     $this->flash('Chave removida.');
-    $this->redirect($this->volta('/'));
+    $this->redirect($this->volta('/') . '#tags');
   }
 }

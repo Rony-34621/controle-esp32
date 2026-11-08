@@ -70,10 +70,16 @@ section p form.inline{margin-left:8px}
 .mut{color:var(--mut);font-weight:500}
 code{background:var(--bg);color:var(--gold);padding:2px 8px;border-radius:6px;border:1px solid var(--line);font-weight:700}
 .box{max-width:400px;margin:56px auto}
+
+/* Modal (dialog nativo) */
+dialog{background:linear-gradient(180deg,var(--surface2) 0,var(--surface) 100%);color:var(--ink);border:1px solid var(--line2);border-radius:14px;padding:24px;width:min(680px,92vw);box-shadow:0 24px 80px rgba(0,0,0,.65)}
+dialog::backdrop{background:rgba(4,7,14,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+dialog h2{margin-top:0}
+dialog h3{margin:22px 0 10px;font-size:.95rem;text-transform:uppercase;letter-spacing:.6px;color:var(--gold)}
 </style></head><body>
 <header><a href="<?= url('/') ?>"><strong>Controle de Acesso</strong></a>
 <?php if (\App\Core\Auth::check()): ?><nav>
-  <a href="<?= url('/') ?>">Usuários</a><a href="<?= url('/acessos') ?>">Acessos</a>
+  <a href="<?= url('/') ?>">Usuários</a><a href="<?= url('/acessos') ?>">Acessos</a><a href="<?= url('/catracas') ?>">Catracas</a>
   <a href="<?= url('/admins') ?>">Administradores</a><a href="<?= url('/auditoria') ?>">Auditoria</a>
   <form method="post" action="<?= url('/logout') ?>" class="inline"><?= csrf_field() ?><button class="mini sec">Sair (<?= h(\App\Core\Auth::nome()) ?>)</button></form>
 </nav><?php endif; ?></header>

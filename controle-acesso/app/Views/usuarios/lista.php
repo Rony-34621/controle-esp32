@@ -14,5 +14,6 @@
 <input type="hidden" name="comp" value="<?= h($mes) ?>"><input type="hidden" name="valor" value="<?= h($u['valor_mensalidade']) ?>"><input type="hidden" name="pago" value="<?= $u['pago'] ? 0 : 1 ?>">
 <span class="tag <?= $u['pago'] ? 'sim' : 'nao' ?>"><?= $u['pago'] ? 'Pago' : 'Em aberto' ?></span><button class="mini sec"><?= $u['pago'] ? 'Desmarcar' : 'Marcar pago' ?></button></form></td>
 <td><a class="btn mini sec" href="<?= url("/usuarios/$id") ?>">Abrir</a>
+<a class="btn mini sec" href="<?= url("/usuarios/$id") ?>#tags">Tags</a>
 <form method="post" action="<?= url("/usuarios/$id/status") ?>" class="inline"><?= csrf_field() ?><input type="hidden" name="volta" value="/"><button class="mini sec"><?= $u['ativo'] === 'S' ? 'Desativar' : 'Ativar' ?></button></form></td></tr>
 <?php endforeach; if (!$usuarios) echo '<tr><td colspan="8" class="mut">Nenhum usuário ainda. Clique em “Novo usuário” para começar.</td></tr>'; ?></table></div></section>

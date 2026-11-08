@@ -20,12 +20,35 @@
 <?php foreach ($pagamentos as $p): ?><tr><td><?= h($p['competencia']) ?></td><td>R$ <?= number_format((float)$p['valor'], 2, ',', '.') ?></td><td><?= h(fmt_data($p['pago_em'], 'd/m/Y H:i')) ?></td>
 <td><form method="post" action="<?= url("/usuarios/$id/pagamento") ?>" class="inline" onsubmit="return confirm('Desmarcar este pagamento?')"><?= csrf_field() ?><input type="hidden" name="pago" value="0"><input type="hidden" name="comp" value="<?= h($p['competencia']) ?>"><button class="mini del">Desmarcar</button></form></td></tr>
 <?php endforeach; if (!$pagamentos) echo '<tr><td colspan="4" class="mut">Nenhum pagamento marcado ainda.</td></tr>'; ?></table></div></section>
-<section><h2>Chaves RFID</h2>
-<?php foreach ($chaves as $c): ?><p><code><?= h($c['uid']) ?></code> <form method="post" action="<?= url('/chaves/' . (int)$c['id'] . '/excluir') ?>" class="inline"><?= csrf_field() ?><input type="hidden" name="volta" value="<?= h($volta) ?>"><button class="mini del">Remover</button></form></p>
-<?php endforeach; if (!$chaves) echo '<p class="mut">Nenhuma chave vinculada.</p>'; ?>
+<section id="tags"><h2>Tags e cartões RFID</h2>
+<?php $ativas = count(array_filter($chaves, fn($c) => (int)$c['ativo'])); ?>
+<p><?php if ($chaves): ?><?= count($chaves) ?> cadastrada(s) · <span class="tag sim"><?= $ativas ?> ativa(s)</span> <span class="tag nao"><?= count($chaves) - $ativas ?> desativada(s)</span><?php else: ?><span class="mut">Nenhuma tag ou cartão vinculado.</span><?php endif; ?></p>
+<p><button type="button" onclick="document.getElementById('modalTags').showModal()">Gerenciar tags e cartões</button></p></section>
+
+<dialog id="modalTags">
+<h2>Tags e cartões de <?= h($u['nome']) ?></h2>
+<div class="tbl"><table><tr><th>UID</th><th>Situação</th><th>Cadastrada em</th><th>Ações</th></tr>
+<?php foreach ($chaves as $c): ?><tr>
+<td><code><?= h($c['uid']) ?></code></td>
+<td><span class="tag <?= (int)$c['ativo'] ? 'sim' : 'nao' ?>"><?= (int)$c['ativo'] ? 'Ativa' : 'Desativada' ?></span></td>
+<td><?= h(fmt_data($c['criado_em'], 'd/m/Y H:i')) ?></td>
+<td><form method="post" action="<?= url('/chaves/' . (int)$c['id'] . '/status') ?>" class="inline"><?= csrf_field() ?><input type="hidden" name="volta" value="<?= h($volta) ?>"><button class="mini sec"><?= (int)$c['ativo'] ? 'Desativar' : 'Ativar' ?></button></form>
+<form method="post" action="<?= url('/chaves/' . (int)$c['id'] . '/excluir') ?>" class="inline" onsubmit="return confirm('Remover esta chave do usuário?')"><?= csrf_field() ?><input type="hidden" name="volta" value="<?= h($volta) ?>"><button class="mini del">Remover</button></form></td></tr>
+<?php endforeach; if (!$chaves) echo '<tr><td colspan="4" class="mut">Nenhuma tag ou cartão vinculado ainda.</td></tr>'; ?></table></div>
+
+<h3>Cadastrar nova tag ou cartão</h3>
+<form method="post" action="<?= url("/usuarios/$id/chaves") ?>" class="inline"><?= csrf_field() ?>
+<input name="uid" placeholder="A1:B2:C3:D4" required aria-label="UID da tag"><button>Cadastrar</button></form>
+<p class="mut">Informe o UID lido pelo ESP32: 4 a 10 bytes em hexadecimal, com ou sem separador.</p>
+
+<h3>Vincular chave pendente</h3>
 <?php if ($pendentes): ?><form method="post" action="" class="inline" onsubmit="this.action='<?= url('/chaves/') ?>'+this.chave.value+'/vincular'"><?= csrf_field() ?><input type="hidden" name="usuario" value="<?= $id ?>"><input type="hidden" name="volta" value="<?= h($volta) ?>">
 <select name="chave" aria-label="Chave pendente"><?php foreach ($pendentes as $c) echo '<option value="' . (int)$c['id'] . '">' . h($c['uid']) . '</option>'; ?></select><button>Vincular chave pendente</button></form>
-<?php else: ?><p class="mut">Sem chaves pendentes. Passe o cartão mestre no leitor para ativar o modo cadastro e aproxime a chave nova.</p><?php endif; ?></section>
+<?php else: ?><p class="mut">Sem chaves pendentes. Passe o cartão mestre no leitor para ativar o modo cadastro e aproxime a chave nova.</p><?php endif; ?>
+
+<p style="margin-top:18px;text-align:right"><button type="button" class="sec" onclick="document.getElementById('modalTags').close()">Fechar</button></p>
+</dialog>
+<script>if (location.hash === '#tags') document.getElementById('modalTags').showModal();</script>
 <section><h2>Últimos acessos</h2><div class="tbl"><table><tr><th>Data e hora</th><th>Resultado</th></tr>
 <?php foreach ($acessos as $a): ?><tr><td><?= h(fmt_data($a['data_hora'], 'd/m/Y H:i:s')) ?></td><td><span class="tag <?= $a['autorizado'] ? 'sim' : 'nao' ?>"><?= h($a['motivo']) ?></span></td></tr>
 <?php endforeach; if (!$acessos) echo '<tr><td colspan="2" class="mut">Nenhum acesso registrado.</td></tr>'; ?></table></div>

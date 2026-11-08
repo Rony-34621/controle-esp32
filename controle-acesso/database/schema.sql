@@ -25,10 +25,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
 ) ENGINE=InnoDB;
 
 -- usuario_id NULL = chave pendente (enviada pelo ESP32 em modo cadastro)
+-- ativo 0 = chave bloqueada no painel (acesso negado mesmo com cadastro em dia)
 CREATE TABLE IF NOT EXISTS chaves (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   uid VARCHAR(40) NOT NULL UNIQUE,
   usuario_id INT UNSIGNED NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
@@ -46,16 +48,29 @@ CREATE TABLE IF NOT EXISTS pagamentos (
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- catracas/controladoras (ESP32, ESP8266) que falam com a API; token é a chave da API
+CREATE TABLE IF NOT EXISTS catracas (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  tipo ENUM('esp32','esp8266','outro') NOT NULL DEFAULT 'esp32',
+  token CHAR(32) NOT NULL UNIQUE,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  ultimo_contato DATETIME NULL,
+  criado_em DATETIME NOT NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS acessos (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   uid VARCHAR(40) NOT NULL,
   usuario_id INT UNSIGNED NULL,
   usuario_nome VARCHAR(100) NULL,
+  catraca_id INT UNSIGNED NULL,
   autorizado TINYINT(1) NOT NULL,
   motivo VARCHAR(60) NOT NULL,
   data_hora DATETIME NOT NULL,
   INDEX (data_hora), INDEX (usuario_id),
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  FOREIGN KEY (catraca_id) REFERENCES catracas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- toda alteração feita por um administrador fica registrada aqui
